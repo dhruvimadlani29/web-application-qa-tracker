@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GovForm QA Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f5f3;
+      color: #1a1a1a;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: #fff;
+      border-bottom: 1px solid #e5e5e2;
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .header-icon {
+      width: 32px; height: 32px; background: #1a1a1a; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .header-icon svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .app-title { font-size: 15px; font-weight: 600; color: #1a1a1a; }
+    .app-sub { font-size: 12px; color: #888; margin-top: 1px; }
+    .btn-add {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px; background: #1a1a1a; color: #fff;
+      border: none; border-radius: 8px; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .btn-add:hover { background: #333; }
+    .btn-add svg { width: 15px; height: 15px; stroke: #fff; fill: none; stroke-width: 2.5; stroke-linecap: round; }
+
+    /* ── Main ── */
+    .main { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+
+    /* ── Stats ── */
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 1.5rem; }
+    .stat {
+      background: #fff; border: 1px solid #e5e5e2; border-radius: 10px;
+      padding: 16px 18px;
+    }
+    .stat-label { font-size: 12px; color: #888; margin-bottom: 6px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
+    .stat-val { font-size: 28px; font-weight: 600; color: #1a1a1a; }
+    .stat-val.open { color: #c0392b; }
+    .stat-val.prog { color: #d35400; }
+    .stat-val.res  { color: #27ae60; }
+
+    /* ── Toolbar ── */
+    .toolbar { display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
+    .search-wrap { flex: 1; min-width: 200px; position: relative; }
+    .search-wrap svg {
+      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      width: 15px; height: 15px; stroke: #aaa; fill: none; stroke-width: 2; stroke-linecap: round;
+    }
+    .toolbar input {
+      width: 100%; padding: 8px 10px 8px 32px; font-size: 13px;
+      border: 1px solid #e5e5e2; border-radius: 8px; background: #fff;
+      color: #1a1a1a; outline: none; transition: border 0.15s;
+    }
+    .toolbar input:focus { border-color: #aaa; }
+    .toolbar select {
+      padding: 8px 12px; font-size: 13px; border: 1px solid #e5e5e2;
+      border-radius: 8px; background: #fff; color: #1a1a1a;
+      cursor: pointer; outline: none;
+    }
+    .toolbar select:focus { border-color: #aaa; }
+
+    /* ── Table ── */
+    .table-wrap { background: #fff; border: 1px solid #e5e5e2; border-radius: 12px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead { background: #fafaf8; }
+    th {
+      padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 600;
+      color: #888; text-transform: uppercase; letter-spacing: 0.05em;
+      border-bottom: 1px solid #e5e5e2;
+    }
+    td { padding: 12px 14px; border-bottom: 1px solid #f0f0ee; vertical-align: middle; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: #fafaf8; }
+    .def-id { font-family: 'Courier New', monospace; font-size: 12px; color: #888; white-space: nowrap; }
+    .def-title { font-weight: 500; font-size: 13px; color: #1a1a1a; }
+    .def-desc { font-size: 12px; color: #888; margin-top: 2px; }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 600;
+      padding: 3px 9px; border-radius: 20px; white-space: nowrap;
+    }
+    .b-high { background: #fde8e8; color: #c0392b; border: 1px solid #f5c6c6; }
+    .b-med  { background: #fef3e2; color: #d35400; border: 1px solid #fad7a0; }
+    .b-low  { background: #e8f4fd; color: #1a6fa8; border: 1px solid #aed6f1; }
+    .b-open { background: #fde8e8; color: #c0392b; border: 1px solid #f5c6c6; }
+    .b-prog { background: #fef3e2; color: #d35400; border: 1px solid #fad7a0; }
+    .b-res  { background: #e9f7ef; color: #1e8449; border: 1px solid #a9dfbf; }
+
+    .module-tag {
+      font-size: 11px; color: #555; background: #f5f5f3;
+      padding: 3px 8px; border-radius: 5px; border: 1px solid #e5e5e2;
+      white-space: nowrap;
+    }
+
+    /* ── Status select ── */
+    .status-sel {
+      font-size: 12px; padding: 4px 8px; border-radius: 6px;
+      border: 1px solid #e5e5e2; background: #fff; color: #1a1a1a; cursor: pointer;
+    }
+
+    /* ── Delete btn ── */
+    .del-btn {
+      background: none; border: none; cursor: pointer; padding: 4px 6px;
+      border-radius: 6px; color: #ccc; transition: color 0.15s, background 0.15s;
+    }
+    .del-btn:hover { color: #c0392b; background: #fde8e8; }
+    .del-btn svg { width: 15px; height: 15px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+
+    /* ── Empty ── */
+    .empty { text-align: center; padding: 3rem; color: #aaa; font-size: 14px; }
+
+    /* ── Modal ── */
+    .modal-bg {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 100;
+      align-items: center; justify-content: center;
+    }
+    .modal-bg.open { display: flex; }
+    .modal {
+      background: #fff; border-radius: 14px; padding: 1.75rem;
+      width: 460px; max-width: 95vw; box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem;
+    }
+    .modal h3 { font-size: 16px; font-weight: 600; color: #1a1a1a; }
+    .modal-close {
+      background: none; border: none; cursor: pointer; color: #aaa; padding: 2px;
+      border-radius: 4px; display: flex;
+    }
+    .modal-close:hover { color: #1a1a1a; }
+    .modal-close svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 12px; font-weight: 500; color: #555; margin-bottom: 5px; }
+    .field input, .field select, .field textarea {
+      width: 100%; padding: 9px 12px; font-size: 13px;
+      border: 1px solid #e5e5e2; border-radius: 8px; background: #fff;
+      color: #1a1a1a; outline: none; font-family: inherit; transition: border 0.15s;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: #999; }
+    .field textarea { resize: vertical; height: 80px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 1.25rem; }
+    .btn-cancel {
+      padding: 8px 16px; background: #fff; border: 1px solid #e5e5e2;
+      border-radius: 8px; font-size: 13px; color: #555; cursor: pointer;
+    }
+    .btn-cancel:hover { background: #f5f5f3; }
+    .btn-save {
+      padding: 8px 18px; background: #1a1a1a; border: none;
+      border-radius: 8px; font-size: 13px; font-weight: 500; color: #fff; cursor: pointer;
+    }
+    .btn-save:hover { background: #333; }
+
+    /* ── Validation ── */
+    .field input.err, .field select.err, .field textarea.err { border-color: #c0392b; }
+    .err-msg { font-size: 11px; color: #c0392b; margin-top: 4px; display: none; }
+    .err-msg.show { display: block; }
+
+    @media (max-width: 640px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .main { padding: 1rem; }
+      .header { padding: 0 1rem; }
+      th:nth-child(3), td:nth-child(3),
+      th:nth-child(6), td:nth-child(6) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-left">
+    <div class="header-icon">
+      <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    </div>
+    <div>
+      <div class="app-title">GovForm QA Tracker</div>
+      <div class="app-sub">Global Affairs Canada — Internal QA Dashboard</div>
+    </div>
+  </div>
+  <button class="btn-add" onclick="openModal()">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    Log defect
+  </button>
+</header>
+
+<!-- Main -->
+<main class="main">
+
+  <!-- Stats -->
+  <div class="stats" id="stats"></div>
+
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="search" placeholder="Search by ID or title..." oninput="render()">
+    </div>
+    <select id="fStatus" onchange="render()">
+      <option value="">All statuses</option>
+      <option>Open</option>
+      <option>In Progress</option>
+      <option>Resolved</option>
+    </select>
+    <select id="fSev" onchange="render()">
+      <option value="">All severities</option>
+      <option>High</option>
+      <option>Medium</option>
+      <option>Low</option>
+    </select>
+    <select id="fMod" onchange="render()">
+      <option value="">All modules</option>
+      <option>Form Validation</option>
+      <option>Authentication</option>
+      <option>Dashboard</option>
+      <option>Data Export</option>
+      <option>Navigation</option>
+    </select>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Title</th>
+          <th>Module</th>
+          <th>Severity</th>
+          <th>Status</th>
+          <th>Reported</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+</main>
+
+<!-- Modal -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Log new defect</h3>
+      <button class="modal-close" onclick="closeModal()" aria-label="Close">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="field">
+      <label>Title *</label>
+      <input id="mTitle" type="text" placeholder="Brief description of the issue">
+      <div class="err-msg" id="errTitle">Title is required.</div>
+    </div>
+    <div class="field">
+      <label>Module</label>
+      <select id="mMod">
+        <option>Form Validation</option>
+        <option>Authentication</option>
+        <option>Dashboard</option>
+        <option>Data Export</option>
+        <option>Navigation</option>
+      </select>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Severity</label>
+        <select id="mSev">
+          <option>High</option>
+          <option selected>Medium</option>
+          <option>Low</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Status</label>
+        <select id="mStat">
+          <option selected>Open</option>
+          <option>In Progress</option>
+          <option>Resolved</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Description</label>
+      <textarea id="mDesc" placeholder="Steps to reproduce, expected vs actual behaviour..."></textarea>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveDefect()">Save defect</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let defects = [
+    { id: "DEF-001", title: "Required field bypass on form submit",       module: "Form Validation", severity: "High",   status: "Open",        date: "2026-05-10", desc: "User can submit form without filling required fields when pressing Enter key." },
+    { id: "DEF-002", title: "Session timeout not triggering logout",      module: "Authentication",  severity: "High",   status: "In Progress", date: "2026-05-11", desc: "After 30-min idle, session cookie persists and user remains logged in." },
+    { id: "DEF-003", title: "CSV export missing header row",              module: "Data Export",     severity: "Medium", status: "Open",        date: "2026-05-12", desc: "Exported CSV file omits column headers when date filter is applied." },
+    { id: "DEF-004", title: "Dashboard stat cards show NaN on first load",module: "Dashboard",       severity: "Medium", status: "Resolved",    date: "2026-05-08", desc: "Race condition in data fetch causes NaN display before data resolves." },
+    { id: "DEF-005", title: "Back button breaks breadcrumb trail",        module: "Navigation",      severity: "Low",    status: "Resolved",    date: "2026-05-09", desc: "Browser back button does not update breadcrumb component state." },
+    { id: "DEF-006", title: "Email field accepts invalid format",         module: "Form Validation", severity: "Medium", status: "In Progress", date: "2026-05-13", desc: "Regex validation allows submissions like user@domain without TLD." },
+  ];
+  let nextId = 7;
+
+  function pad(n) { return String(n).padStart(3, '0'); }
+  function today() { return new Date().toISOString().slice(0, 10); }
+
+  function sevClass(s) { return s === 'High' ? 'b-high' : s === 'Medium' ? 'b-med' : 'b-low'; }
+  function statClass(s) { return s === 'Open' ? 'b-open' : s === 'In Progress' ? 'b-prog' : 'b-res'; }
+
+  function render() {
+    const q   = (document.getElementById('search').value || '').toLowerCase();
+    const fS  = document.getElementById('fStatus').value;
+    const fSv = document.getElementById('fSev').value;
+    const fM  = document.getElementById('fMod').value;
+
+    const filtered = defects.filter(d => {
+      if (q && !d.title.toLowerCase().includes(q) && !d.id.toLowerCase().includes(q)) return false;
+      if (fS  && d.status   !== fS)  return false;
+      if (fSv && d.severity !== fSv) return false;
+      if (fM  && d.module   !== fM)  return false;
+      return true;
+    });
+
+    const tbody = document.getElementById('tbody');
+
+    if (!filtered.length) {
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty">No defects match your filters.</div></td></tr>`;
+    } else {
+      tbody.innerHTML = filtered.map(d => `
+        <tr>
+          <td><span class="def-id">${d.id}</span></td>
+          <td>
+            <div class="def-title">${d.title}</div>
+            <div class="def-desc">${d.desc.length > 70 ? d.desc.slice(0, 70) + '…' : d.desc}</div>
+          </td>
+          <td><span class="module-tag">${d.module}</span></td>
+          <td><span class="badge ${sevClass(d.severity)}">${d.severity}</span></td>
+          <td>
+            <select class="status-sel" onchange="changeStatus('${d.id}', this.value)">
+              ${['Open','In Progress','Resolved'].map(s => `<option${s === d.status ? ' selected' : ''}>${s}</option>`).join('')}
+            </select>
+          </td>
+          <td style="font-size:12px;color:#888;white-space:nowrap">${d.date}</td>
+          <td>
+            <button class="del-btn" onclick="deleteDefect('${d.id}')" aria-label="Delete defect ${d.id}">
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    renderStats();
+  }
+
+  function renderStats() {
+    const open = defects.filter(d => d.status === 'Open').length;
+    const prog = defects.filter(d => d.status === 'In Progress').length;
+    const res  = defects.filter(d => d.status === 'Resolved').length;
+    document.getElementById('stats').innerHTML = `
+      <div class="stat"><div class="stat-label">Total defects</div><div class="stat-val">${defects.length}</div></div>
+      <div class="stat"><div class="stat-label">Open</div><div class="stat-val open">${open}</div></div>
+      <div class="stat"><div class="stat-label">In progress</div><div class="stat-val prog">${prog}</div></div>
+      <div class="stat"><div class="stat-label">Resolved</div><div class="stat-val res">${res}</div></div>
+    `;
+  }
+
+  function changeStatus(id, val) {
+    const d = defects.find(x => x.id === id);
+    if (d) d.status = val;
+    renderStats();
+  }
+
+  function deleteDefect(id) {
+    if (!confirm(`Delete ${id}?`)) return;
+    defects = defects.filter(d => d.id !== id);
+    render();
+  }
+
+  function openModal() {
+    document.getElementById('modalBg').classList.add('open');
+    document.getElementById('mTitle').focus();
+  }
+
+  function closeModal() {
+    document.getElementById('modalBg').classList.remove('open');
+    document.getElementById('mTitle').value = '';
+    document.getElementById('mDesc').value = '';
+    document.getElementById('mTitle').classList.remove('err');
+    document.getElementById('errTitle').classList.remove('show');
+  }
+
+  function saveDefect() {
+    const title = document.getElementById('mTitle').value.trim();
+    if (!title) {
+      document.getElementById('mTitle').classList.add('err');
+      document.getElementById('errTitle').classList.add('show');
+      document.getElementById('mTitle').focus();
+      return;
+    }
+    defects.unshift({
+      id:       'DEF-' + pad(nextId++),
+      title,
+      module:   document.getElementById('mMod').value,
+      severity: document.getElementById('mSev').value,
+      status:   document.getElementById('mStat').value,
+      date:     today(),
+      desc:     document.getElementById('mDesc').value.trim() || 'No description provided.'
+    });
+    closeModal();
+    render();
+  }
+
+  // Close modal on backdrop click
+  document.getElementById('modalBg').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // Close modal on Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  render();
+</script>
+</body>
+</html>
